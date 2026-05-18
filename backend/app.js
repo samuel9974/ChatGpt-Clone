@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import db from "./db/db.config.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import mainRouter from "./api/main.routes.js";
@@ -12,11 +13,6 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api", mainRouter);
 app.use(errorHandler);
-
-
-
-
-
 
 
 async function startServer() {
