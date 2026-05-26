@@ -25,26 +25,35 @@ const createConversationService = async (question) => {
 
     //get recent conversation rows
     const historyRows = await getRecentConversationsRows();
-    
+    console.log("historyRows::", historyRows);
+    console.log("================================================================");
 
     //insert new conversation
-     const [result] = await db.execute(
-      "INSERT INTO conversations (role, content) VALUES (?, ? )",
-      ["user", question],
-    );
+    const [result] = await db.execute("INSERT INTO conversations (role, content) VALUES (?, ? )", ["user", question]);
+    // console.log("result::", result);
+    // console.log("result.insertId::", result.insertId);
+    // console.log("================================================================");
 
     //generate assistant answer
     const {text, totalTokens} = await generateAssistantAnswer(historyRows, question);
+    //log the assistant answer and total tokens
+    // console.log("text ::", text);
+    // console.log("totalTokens ::", totalTokens);
+    // console.log("================================================================");
 
     //insert assistant answer into database
-    const [createAssistantMessageResult] = await db.execute(
-      "INSERT INTO conversations (role, content, token_count) VALUES (?, ?, ?)",
-      ["assistant", text, totalTokens],
-    );
+    const [createAssistantMessageResult] = await db.execute( "INSERT INTO conversations (role, content, token_count) VALUES (?, ?, ?)", 
+      ["assistant", text, totalTokens]);
+    // console.log("createAssistantMessageResult ::", createAssistantMessageResult);
+    // console.log("================================================================");
 
     const userConversation = await getMessageById(result.insertId);
+    // console.log("userConversation ::", userConversation);
+    // console.log("================================================================");
 
     const assistantConversation = await getMessageById(createAssistantMessageResult.insertId);
+    // console.log("assistantConversation ::", assistantConversation);
+    // console.log("================================================================");
 
     return {
       historyRows,
@@ -65,12 +74,14 @@ const createConversationService = async (question) => {
  *   May reject with a database error (e.g. connection or SQL errors reflected in the thrown `Error.message`).
  */
 const getMessageById = async (messageId) => {
-  const [rows] = await db.execute(
-    "SELECT * FROM conversations WHERE id = ? LIMIT 1",
-    [messageId],
-  );
+  const [rows] = await db.execute("SELECT * FROM conversations WHERE id = ? LIMIT 1", [messageId]);
+  // console.log("rows", rows);
+  // console.log("================================================================");
 
   if (!rows[0]) return null;
+  // console.log("rows[0]", rows[0]);
+  // console.log("================================================================");
+
 
   return {
     id: rows[0].id,
@@ -98,19 +109,41 @@ const generateAssistantAnswer = async (historyRows, question) => {
     role: row.role === "assistant" ? "model" : "user",
     parts: [{ text: row.content }],
   }));
+  // console.log("formatHistory ::", formatHistory);
+  // console.log("================================================================");
  
   try {
+    //create chat session with gemini model and history rows as context for the conversation  
     const chat = geminiClient.chats.create({
       // TODO: Add more config options
+      model: GEMINI_MODEL,
       config: {
         maxOutputTokens: 1000,
+        systemInstruction: `You are an expert software engineering assistant. Your primary role is to help developers write, debug, and understand code.
+                            # Core Objectives
+                            - Provide accurate, practical, and efficient programming solutions.
+                            - Explain technical concepts clearly and concisely.
+
+                            # Constraints & Boundaries
+                            - STRICTLY limit your answers to software engineering, programming, computer science, and IT-related topics.
+                            - If a user asks about non-programming topics (e.g., travel, health, finance, legal, lifestyle), you MUST politely decline and steer the conversation.
+                            - Do not write harmful, malicious, or unethical code.
+
+                            # Tone & Style
+                            - Be professional, helpful, and direct.
+                            - Keep responses concise; avoid unnecessary fluff.
+                            - Use Markdown formatting for readability.
+                            - Always wrap code snippets in appropriate language-specific code blocks.`,
       },
-      model: GEMINI_MODEL,
       history: formatHistory,
     });
-    
-    const result = await chat.sendMessage({ message: question });
+    // console.log("chat ::", chat);
+    // console.log("================================================================");
 
+    //send message to gemini
+    const result = await chat.sendMessage({ message: question });
+    console.log("result ::", result);
+    console.log("================================================================");
     return {
       text: result.text,
       totalTokens: result.usageMetadata.totalTokenCount,
@@ -129,20 +162,21 @@ const generateAssistantAnswer = async (historyRows, question) => {
  *   May reject with a database error (e.g. connection or SQL errors in the thrown `Error.message`).
  */
 const getRecentConversationsRows = async (limit) => {
+
+  //TODO: add validation for limit
   // validation of limit
   const normalizedLimit = Number.parseInt(limit, 10);
-  const safeLimit =
-    Number.isNaN(normalizedLimit) || normalizedLimit <= 0
-      ? 20
-      : normalizedLimit;
+  const safeLimit = Number.isNaN(normalizedLimit) || normalizedLimit <= 0 ? 20 : normalizedLimit;
+  
 
   try {
-    const [rows] = await db.execute(
-      `SELECT * 
-      FROM conversations 
-      ORDER BY created_at DESC LIMIT ${safeLimit}`,
-    );
-    return rows.reverse();
+    const [rows] = await db.execute(`SELECT * FROM conversations ORDER BY created_at DESC LIMIT ${safeLimit}`);
+    // console.log("rows ::", rows);
+    // console.log("================================================================");
+    const reversedRows = rows.reverse();
+    // console.log("reversedRows ::", reversedRows);
+    // console.log("================================================================");
+    return reversedRows;
   } catch (error) {
     throw error;
   }

@@ -4,4 +4,6 @@ CREATE TABLE IF NOT EXISTS conversations (
     content TEXT NOT NULL,
     token_count INT UNSIGNED NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+    );
+
+

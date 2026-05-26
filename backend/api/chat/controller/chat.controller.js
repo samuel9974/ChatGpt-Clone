@@ -17,6 +17,7 @@ import { createConversationService,
 async function createConversationController(req, res, next) {
   try {
     const { question } = req.body;
+    // console.log("question", question);
     const conversation = await createConversationService(question);
     res.status(201).json({
       status: true,
@@ -32,7 +33,7 @@ async function createConversationController(req, res, next) {
 /**
  * Handles an HTTP request to fetch recent conversation messages.
  * Assumes `req`, `res`, and `next` are not null or undefined.
- *
+
  * @param req - Express request object; no request body is required.
  * @param res - Express response used to send `200` JSON on success.
  * @param next - Express `next` function used to forward errors to the error middleware.
