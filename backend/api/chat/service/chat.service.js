@@ -25,36 +25,21 @@ const createConversationService = async (question) => {
 
     //get recent conversation rows
     const historyRows = await getRecentConversationsRows(5);
-    console.log("historyRows::", historyRows);
-    console.log("================================================================");
-
+    
     //insert new conversation
     const [result] = await db.execute("INSERT INTO conversations (role, content) VALUES (?, ? )", ["user", question]);
-    // console.log("result::", result);
-    // console.log("result.insertId::", result.insertId);
-    // console.log("================================================================");
-
+    
     //generate assistant answer
     const {text, totalTokens} = await generateAssistantAnswer(historyRows, question);
-    //log the assistant answer and total tokens
-    // console.log("text ::", text);
-    // console.log("totalTokens ::", totalTokens);
-    // console.log("================================================================");
-
+    
     //insert assistant answer into database
     const [createAssistantMessageResult] = await db.execute( "INSERT INTO conversations (role, content, token_count) VALUES (?, ?, ?)", 
       ["assistant", text, totalTokens]);
-    // console.log("createAssistantMessageResult ::", createAssistantMessageResult);
-    // console.log("================================================================");
-
-    const userConversation = await getMessageById(result.insertId);
-    // console.log("userConversation ::", userConversation);
-    // console.log("================================================================");
-
-    const assistantConversation = await getMessageById(createAssistantMessageResult.insertId);
-    // console.log("assistantConversation ::", assistantConversation);
-    // console.log("================================================================");
-
+    
+    await getMessageById(result.insertId);
+    
+    await getMessageById(createAssistantMessageResult.insertId);
+    
     return {
       historyRows,
       assistantAnswer: text,
@@ -75,13 +60,8 @@ const createConversationService = async (question) => {
  */
 const getMessageById = async (messageId) => {
   const [rows] = await db.execute("SELECT * FROM conversations WHERE id = ? LIMIT 1", [messageId]);
-  // console.log("rows", rows);
-  // console.log("================================================================");
-
+  
   if (!rows[0]) return null;
-  // console.log("rows[0]", rows[0]);
-  // console.log("================================================================");
-
 
   return {
     id: rows[0].id,
@@ -109,9 +89,7 @@ const generateAssistantAnswer = async (historyRows, question) => {
     role: row.role === "assistant" ? "model" : "user",
     parts: [{ text: row.content }],
   }));
-  // console.log("formatHistory ::", formatHistory);
-  // console.log("================================================================");
- 
+  
   try {
     //create chat session with gemini model and history rows as context for the conversation  
     const chat = geminiClient.chats.create({
@@ -137,13 +115,10 @@ const generateAssistantAnswer = async (historyRows, question) => {
       },
       history: formatHistory,
     });
-    // console.log("chat ::", chat);
-    // console.log("================================================================");
-
+    
     //send message to gemini
     const result = await chat.sendMessage({ message: question });
-    console.log("result ::", result);
-    console.log("================================================================");
+    
     return {
       text: result.text,
       totalTokens: result.usageMetadata.totalTokenCount,
@@ -171,11 +146,9 @@ const getRecentConversationsRows = async (limit) => {
 
   try {
     const [rows] = await db.execute(`SELECT * FROM conversations ORDER BY created_at DESC LIMIT ${safeLimit}`);
-    // console.log("rows ::", rows);
-    // console.log("================================================================");
+    
     const reversedRows = rows.reverse();
-    // console.log("reversedRows ::", reversedRows);
-    // console.log("================================================================");
+    
     return reversedRows;
   } catch (error) {
     throw error;
