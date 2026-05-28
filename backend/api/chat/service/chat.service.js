@@ -24,7 +24,7 @@ const createConversationService = async (question) => {
     }
 
     //get recent conversation rows
-    const historyRows = await getRecentConversationsRows();
+    const historyRows = await getRecentConversationsRows(5);
     console.log("historyRows::", historyRows);
     console.log("================================================================");
 

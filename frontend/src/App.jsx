@@ -52,12 +52,21 @@ function App() {
       content: question.trim(),
     };
     setConversations((prev) => [...prev, tempUserMessage]);
-    
+    console.log("conversations", conversations);
     try {
       setIsLoading(true);
       const response = await axios.post(`${API_BASE_URL}/chat/conversations`, {question: question.trim()});
+      console.log("response", response);
       if (response.data.status) {
-        setConversations((prev) => [...prev, response.data.assistantAnswer]);
+        const assistantAnswer = response.data.data?.assistantAnswer;
+        setConversations((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            role: 'assistant',
+            content: assistantAnswer,
+          },
+        ]);
       }
     } catch (error) {
       console.error('Error posting conversation:', error);
