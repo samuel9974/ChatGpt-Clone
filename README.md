@@ -425,15 +425,3 @@ Ideas aligned with the current codebase and UI shell:
 4. Open a pull request describing what changed and how to test it.
 
 ---
-
-## 📄 License
-
-This project is part of the **Evangadi Networks Full Stack — Phase 5** curriculum. Add your preferred license (e.g. MIT) before open-sourcing publicly.
-
----
-
----
-
-**Built with React, Express, MySQL, and Google Gemini**
-
-⭐ Star this repo if you find it useful!

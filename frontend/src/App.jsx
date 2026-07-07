@@ -6,6 +6,7 @@ import MessageList from './components/MessageList/MessageList';
 import ChatInput from './components/ChatInput/ChatInput';
 import './App.css';
 
+// const API_BASE_URL = 'https://api.samuelwbaneh.com/api';
 const API_BASE_URL = 'http://localhost:5000/api';
 
 function App() {
